@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RSVPApp.Pages.EventDetailsPage"
+             Title="Event Details">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30"
+                Spacing="10">
+
+            <!-- Event info -->
+            <Label x:Name="lblName"
+                    FontSize="28"
+                    FontAttributes="Bold"/>
+            <Label x:Name="lblHost"/>
+            <Label x:Name="lblAddress"/>
+            <Label x:Name="lblDate"/>
+            <Label x:Name="lblDeadline"/>
+            <Label x:Name="lblMax"/>
+            <Label x:Name="lblCount"/>
+
+            <!-- List of attendee names (filled in from code) -->
+            <Label Text="People Attending"
+                    FontSize="18"
+                    FontAttributes="Bold"
+                    Margin="0,10,0,0"/>
+            <VerticalStackLayout x:Name="stackAttendees"
+                    Spacing="4"/>
+
+            <!-- RSVP and Back buttons side by side -->
+            <Grid ColumnSpacing="10"
+                    ColumnDefinitions="*,*"
+                    Margin="0,10,0,0">
+                <Button Grid.Column="0"
+                        Text="RSVP"
+                        BackgroundColor="#F2B134"
+                        TextColor="Black"
+                        Clicked="OnRsvpClicked"/>
+                <Button Grid.Column="1"
+                        Text="Back to Events"
+                        BackgroundColor="#1F3A5F"
+                        TextColor="White"
+                        Clicked="OnBackClicked"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

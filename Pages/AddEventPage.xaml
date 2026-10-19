@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RSVPApp.Pages.AddEventPage"
+             Title="Add Event">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30"
+                Spacing="10">
+
+            <Label Text="Add an Event"
+                    FontSize="28"
+                    FontAttributes="Bold"/>
+
+            <!-- Event fields -->
+            <Label Text="Host Name"/>
+            <Entry x:Name="txtHost"
+                    Placeholder="Name of the person hosting"/>
+
+            <Label Text="Event Name"/>
+            <Entry x:Name="txtEventName"
+                    Placeholder="Enter the event name"/>
+
+            <Label Text="Event Address"/>
+            <Entry x:Name="txtAddress"
+                    Placeholder="Enter the address"/>
+
+            <Label Text="Maximum Allowed Attendees"/>
+            <Entry x:Name="txtMaxAttendees"
+                    Placeholder="Enter a number"
+                    Keyboard="Numeric"/>
+
+            <!-- Date and time pickers side by side -->
+            <Label Text="Event Date and Time"/>
+            <HorizontalStackLayout Spacing="10">
+                <DatePicker x:Name="dpEventDate"/>
+                <TimePicker x:Name="tpEventTime"/>
+            </HorizontalStackLayout>
+
+            <Label Text="RSVP Deadline"/>
+            <DatePicker x:Name="dpDeadline"/>
+
+            <!-- Error message for missing fields -->
+            <Label x:Name="lblError"
+                    TextColor="#D32F2F"/>
+
+            <!-- Save and Cancel buttons side by side -->
+            <Grid ColumnSpacing="10"
+                    ColumnDefinitions="*,*">
+                <Button Grid.Column="0"
+                        Text="Save"
+                        BackgroundColor="#1F3A5F"
+                        TextColor="White"
+                        Clicked="OnSaveClicked"/>
+                <Button Grid.Column="1"
+                        Text="Cancel"
+                        BackgroundColor="Gray"
+                        TextColor="White"
+                        Clicked="OnCancelClicked"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

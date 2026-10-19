@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RSVPApp.Pages.RsvpPage"
+             Title="RSVP">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30"
+                Spacing="10">
+
+            <!-- Which event the user is RSVPing for -->
+            <Label Text="RSVP for"
+                    FontSize="16"/>
+            <Label x:Name="lblEventName"
+                    FontSize="28"
+                    FontAttributes="Bold"/>
+
+            <!-- RSVP fields (filled in if logged in, blank for guests) -->
+            <Label Text="Name"/>
+            <Entry x:Name="txtName"
+                    Placeholder="Enter your name"/>
+
+            <Label Text="Email"/>
+            <Entry x:Name="txtEmail"
+                    Placeholder="Enter your email"
+                    Keyboard="Email"/>
+
+            <Label Text="Mobile Phone Number"/>
+            <Entry x:Name="txtPhone"
+                    Placeholder="Enter your phone number"
+                    Keyboard="Telephone"/>
+
+            <!-- Error message for missing fields -->
+            <Label x:Name="lblError"
+                    TextColor="#D32F2F"/>
+
+            <!-- Submit and Cancel buttons side by side -->
+            <Grid ColumnSpacing="10"
+                    ColumnDefinitions="*,*">
+                <Button Grid.Column="0"
+                        Text="Submit RSVP"
+                        BackgroundColor="#F2B134"
+                        TextColor="Black"
+                        Clicked="OnSubmitClicked"/>
+                <Button Grid.Column="1"
+                        Text="Cancel"
+                        BackgroundColor="Gray"
+                        TextColor="White"
+                        Clicked="OnCancelClicked"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

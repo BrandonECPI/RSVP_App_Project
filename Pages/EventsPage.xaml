@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:RSVPApp.Models"
+             x:Class="RSVPApp.Pages.EventsPage"
+             Title="Events"
+             NavigationPage.HasBackButton="False">
+
+    <!-- Logout button in the top bar -->
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Logout"
+                     Clicked="OnLogoutClicked"/>
+    </ContentPage.ToolbarItems>
+
+    <!-- Grid rows: welcome, filters, filter label, add button, list (list fills the rest) -->
+    <Grid Padding="20"
+          RowSpacing="12"
+          RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+        <!-- Welcome message -->
+        <Label Grid.Row="0"
+               x:Name="lblWelcome"
+               FontSize="24"
+               FontAttributes="Bold"/>
+
+        <!-- Filter buttons: All, Attending, Hosting -->
+        <Grid Grid.Row="1"
+              ColumnSpacing="8"
+              ColumnDefinitions="*,*,*">
+            <Button Grid.Column="0"
+                    x:Name="btnAll"
+                    Text="All"
+                    BackgroundColor="#1F3A5F"
+                    TextColor="White"
+                    Clicked="OnAllClicked"/>
+            <Button Grid.Column="1"
+                    x:Name="btnAttending"
+                    Text="Attending"
+                    BackgroundColor="#1F3A5F"
+                    TextColor="White"
+                    Clicked="OnAttendingClicked"/>
+            <Button Grid.Column="2"
+                    x:Name="btnHosting"
+                    Text="Hosting"
+                    BackgroundColor="#1F3A5F"
+                    TextColor="White"
+                    Clicked="OnHostingClicked"/>
+        </Grid>
+
+        <!-- Shows which filter is active -->
+        <Label Grid.Row="2"
+               x:Name="lblFilter"
+               FontAttributes="Italic"/>
+
+        <!-- Opens the Add Event page -->
+        <Button Grid.Row="3"
+                x:Name="btnAddEvent"
+                Text="+ Add Event"
+                BackgroundColor="#F2B134"
+                TextColor="Black"
+                Clicked="OnAddEventClicked"/>
+
+        <!-- List of events; tap one to see its details -->
+        <CollectionView Grid.Row="4"
+                        x:Name="cvEvents"
+                        SelectionMode="Single"
+                        SelectionChanged="OnEventSelected">
+
+            <CollectionView.EmptyView>
+                <Label Text="No events to show."
+                       HorizontalOptions="Center"
+                       Margin="0,20"/>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:RsvpEvent">
+                    <Border Margin="0,5"
+                            Padding="12"
+                            Stroke="#1F3A5F"
+                            StrokeThickness="2"
+                            StrokeShape="RoundRectangle 8">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding Name}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"/>
+                            <Label Text="{Binding DateDisplay}"/>
+                            <Label Text="{Binding Address}"/>
+                            <Label Text="{Binding HostDisplay}"
+                                   FontSize="12"
+                                   FontAttributes="Italic"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+
+</ContentPage>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RSVPApp.Pages.LoginPage"
+             Title="Login">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30"
+                Spacing="15">
+
+            <!-- App title -->
+            <Label Text="RSVP"
+                    FontSize="40"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center"/>
+            <Label Text="Sign in to see your events"
+                    HorizontalOptions="Center"/>
+
+            <!-- Email and password fields -->
+            <Label Text="Email"/>
+            <Entry x:Name="txtEmail"
+                    Placeholder="Enter your email"
+                    Keyboard="Email"/>
+
+            <Label Text="Password"/>
+            <Entry x:Name="txtPassword"
+                    Placeholder="Enter your password"
+                    IsPassword="True"/>
+
+            <!-- Login as a registered user -->
+            <Button Text="Login"
+                    BackgroundColor="#1F3A5F"
+                    TextColor="White"
+                    Clicked="OnLoginClicked"/>
+
+            <!-- Login as a guest (no account needed) -->
+            <Button Text="Continue as Guest"
+                    BackgroundColor="#F2B134"
+                    TextColor="Black"
+                    Clicked="OnGuestClicked"/>
+
+            <!-- Go to the Create Account page -->
+            <Button Text="Create Account"
+                    BackgroundColor="Transparent"
+                    BorderColor="#F2B134"
+                    BorderWidth="1"
+                    TextColor="#F2B134"
+                    Clicked="OnCreateAccountClicked"/>
+
+            <!-- Error message for failed logins -->
+            <Label x:Name="lblError"
+                    TextColor="#D32F2F"
+                    HorizontalOptions="Center"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

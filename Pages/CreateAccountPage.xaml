@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RSVPApp.Pages.CreateAccountPage"
+             Title="Create Account">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30"
+                Spacing="12">
+
+            <Label Text="Create Account"
+                    FontSize="28"
+                    FontAttributes="Bold"/>
+
+            <!-- Account fields -->
+            <Label Text="Name"/>
+            <Entry x:Name="txtName"
+                    Placeholder="Enter your full name"/>
+
+            <Label Text="Email"/>
+            <Entry x:Name="txtEmail"
+                    Placeholder="Enter your email"
+                    Keyboard="Email"/>
+
+            <Label Text="Password"/>
+            <Entry x:Name="txtPassword"
+                    Placeholder="Create a password"
+                    IsPassword="True"/>
+
+            <Label Text="Mobile Phone Number"/>
+            <Entry x:Name="txtPhone"
+                    Placeholder="Enter your phone number"
+                    Keyboard="Telephone"/>
+
+            <!-- Error message for missing fields -->
+            <Label x:Name="lblError"
+                    TextColor="#D32F2F"/>
+
+            <!-- Add and Cancel buttons side by side -->
+            <Grid ColumnSpacing="10"
+                    ColumnDefinitions="*,*">
+                <Button Grid.Column="0"
+                        Text="Add"
+                        BackgroundColor="#1F3A5F"
+                        TextColor="White"
+                        Clicked="OnAddClicked"/>
+                <Button Grid.Column="1"
+                        Text="Cancel"
+                        BackgroundColor="Gray"
+                        TextColor="White"
+                        Clicked="OnCancelClicked"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
