@@ -1,10 +1,11 @@
+using RSVPApp.DataAccess;
 using RSVPApp.Models;
 using RSVPApp.Services;
 
 namespace RSVPApp.Pages;
 
 /// <summary>
-/// Shows a list of events. Users can filter by All, Attending or Hosting.
+/// Shows events from the database. Users can filter by All, Attending or Hosting.
 /// Guests can only see All events.
 /// </summary>
 public partial class EventsPage : ContentPage
@@ -18,7 +19,6 @@ public partial class EventsPage : ContentPage
 
 		if (Session.IsGuest)
 		{
-			// Guests can't filter by their own events or add events
 			lblWelcome.Text = "Welcome, Guest";
 			btnAttending.IsEnabled = false;
 			btnHosting.IsEnabled = false;
@@ -32,48 +32,52 @@ public partial class EventsPage : ContentPage
 		}
 	}
 
-	// Reloads the list each time the page shows
-	protected override void OnAppearing()
+	// Reloads the list each time the page shows (for example, after adding an event)
+	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
-		LoadEvents();
+		await LoadEventsAsync();
 	}
 
-	// Fills the list based on the current filter
-	private void LoadEvents()
+	// Gets events from the database based on the current filter
+	private async Task LoadEventsAsync()
 	{
-		IEnumerable<RsvpEvent> events = SampleData.Events;
 		User? user = Session.CurrentUser;
+		List<RsvpEvent> events;
 
 		if (currentFilter == "Attending" && user != null)
 		{
-			events = events.Where(ev => ev.Attendees.Contains(user.Name));
+			events = await RsvpDatabase.Instance.GetAttendingEventsAsync(user.Id);
 		}
 		else if (currentFilter == "Hosting" && user != null)
 		{
-			events = events.Where(ev => ev.HostName == user.Name);
+			events = await RsvpDatabase.Instance.GetHostingEventsAsync(user.Id);
+		}
+		else
+		{
+			events = await RsvpDatabase.Instance.GetAllEventsAsync();
 		}
 
-		cvEvents.ItemsSource = events.ToList();
+		cvEvents.ItemsSource = events;
 		lblFilter.Text = $"Showing: {currentFilter} Events";
 	}
 
-	private void OnAllClicked(object sender, EventArgs e)
+	private async void OnAllClicked(object sender, EventArgs e)
 	{
 		currentFilter = "All";
-		LoadEvents();
+		await LoadEventsAsync();
 	}
 
-	private void OnAttendingClicked(object sender, EventArgs e)
+	private async void OnAttendingClicked(object sender, EventArgs e)
 	{
 		currentFilter = "Attending";
-		LoadEvents();
+		await LoadEventsAsync();
 	}
 
-	private void OnHostingClicked(object sender, EventArgs e)
+	private async void OnHostingClicked(object sender, EventArgs e)
 	{
 		currentFilter = "Hosting";
-		LoadEvents();
+		await LoadEventsAsync();
 	}
 
 	// Opens the details page for the tapped event
@@ -81,7 +85,6 @@ public partial class EventsPage : ContentPage
 	{
 		if (e.CurrentSelection.FirstOrDefault() is RsvpEvent selected)
 		{
-			// Clear the selection so the same event can be tapped again later
 			cvEvents.SelectedItem = null;
 			await Navigation.PushAsync(new EventDetailsPage(selected));
 		}

@@ -1,10 +1,11 @@
+using RSVPApp.DataAccess;
 using RSVPApp.Models;
 using RSVPApp.Services;
 
 namespace RSVPApp.Pages;
 
 /// <summary>
-/// Start page. Lets a user log in, continue as a guest or create an account.
+/// Start page. Checks the login against users saved in the database.
 /// </summary>
 public partial class LoginPage : ContentPage
 {
@@ -22,20 +23,19 @@ public partial class LoginPage : ContentPage
 		lblError.Text = string.Empty;
 	}
 
-	// Checks the email and password against the hard-coded users
+	// Checks the email and password against the Users table
 	private async void OnLoginClicked(object sender, EventArgs e)
 	{
 		string email = txtEmail.Text?.Trim() ?? string.Empty;
 		string password = txtPassword.Text ?? string.Empty;
 
-		// Both fields are required
 		if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
 		{
 			lblError.Text = "Please enter your email and password.";
 			return;
 		}
 
-		User? user = SampleData.FindUser(email, password);
+		User? user = await RsvpDatabase.Instance.LoginAsync(email, password);
 
 		if (user == null)
 		{
@@ -43,7 +43,6 @@ public partial class LoginPage : ContentPage
 			return;
 		}
 
-		// Save the logged-in user, then open the Events page
 		Session.CurrentUser = user;
 		await Navigation.PushAsync(new EventsPage());
 	}

@@ -1,8 +1,10 @@
+using RSVPApp.DataAccess;
+using RSVPApp.Models;
+
 namespace RSVPApp.Pages;
 
 /// <summary>
-/// Lets a new user enter account info.
-/// Saving is not functional yet (Week 3).
+/// Lets a new user create an account. Saves it to the Users table.
 /// </summary>
 public partial class CreateAccountPage : ContentPage
 {
@@ -11,22 +13,34 @@ public partial class CreateAccountPage : ContentPage
 		InitializeComponent();
 	}
 
-	// Checks that every field has data, then returns to Login
+	// Checks every field, saves the user, then returns to Login
 	private async void OnAddClicked(object sender, EventArgs e)
 	{
-		bool anyBlank =
-			string.IsNullOrWhiteSpace(txtName.Text) ||
+		if (string.IsNullOrWhiteSpace(txtName.Text) ||
 			string.IsNullOrWhiteSpace(txtEmail.Text) ||
 			string.IsNullOrWhiteSpace(txtPassword.Text) ||
-			string.IsNullOrWhiteSpace(txtPhone.Text);
-
-		if (anyBlank)
+			string.IsNullOrWhiteSpace(txtPhone.Text))
 		{
 			lblError.Text = "Please fill in all fields.";
 			return;
 		}
 
-		// TODO (Week 3): save the new user to local storage
+		var user = new User
+		{
+			Name = txtName.Text.Trim(),
+			Email = txtEmail.Text.Trim(),
+			Password = txtPassword.Text,
+			Phone = txtPhone.Text.Trim()
+		};
+
+		bool added = await RsvpDatabase.Instance.AddUserAsync(user);
+		if (!added)
+		{
+			lblError.Text = "An account with that email already exists.";
+			return;
+		}
+
+		await DisplayAlert("Account Created", "Your account was created. You can now log in.", "OK");
 		await Navigation.PopAsync();
 	}
 
