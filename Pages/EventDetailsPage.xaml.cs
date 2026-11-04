@@ -1,10 +1,11 @@
 using RSVPApp.DataAccess;
 using RSVPApp.Models;
+using RSVPApp.Services;
 
 namespace RSVPApp.Pages;
 
 /// <summary>
-/// Shows all details for one event, including attendees from the database.
+/// Shows all details for one event, including attendees from the web API.
 /// </summary>
 public partial class EventDetailsPage : ContentPage
 {
@@ -31,7 +32,7 @@ public partial class EventDetailsPage : ContentPage
 		await LoadAttendeesAsync();
 	}
 
-	// Gets the attendee names from the Rsvps table
+	// Gets the attendee names from the web API, then checks the RSVP rules
 	private async Task LoadAttendeesAsync()
 	{
 		List<string> names = await RsvpDatabase.Instance.GetAttendeeNamesAsync(rsvpEvent.Id);
@@ -50,7 +51,32 @@ public partial class EventDetailsPage : ContentPage
 			}
 		}
 
-		// TODO (Week 4): check the RSVP deadline and max attendees
+		CheckRsvpRules(names);
+	}
+
+	// Turns off the RSVP button if the deadline passed, the event is full
+	// or the logged-in user is already attending
+	private void CheckRsvpRules(List<string> names)
+	{
+		User? user = Session.CurrentUser;
+		btnRsvp.IsEnabled = true;
+		lblRsvpStatus.Text = string.Empty;
+
+		if (DateTime.Today > rsvpEvent.RsvpDeadline.Date)
+		{
+			btnRsvp.IsEnabled = false;
+			lblRsvpStatus.Text = "The RSVP deadline has passed.";
+		}
+		else if (names.Count >= rsvpEvent.MaxAttendees)
+		{
+			btnRsvp.IsEnabled = false;
+			lblRsvpStatus.Text = "This event is full.";
+		}
+		else if (user != null && names.Contains(user.Name))
+		{
+			btnRsvp.IsEnabled = false;
+			lblRsvpStatus.Text = "You are already attending this event.";
+		}
 	}
 
 	// Opens the RSVP page for this event

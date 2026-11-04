@@ -73,4 +73,11 @@
 		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
 	</ItemGroup>
 
+<!-- Keep the web API project out of the MAUI build -->
+<ItemGroup>
+    <Compile Remove="RSVPApi\**" />
+    <Content Remove="RSVPApi\**" />
+    <EmbeddedResource Remove="RSVPApi\**" />
+    <None Remove="RSVPApi\**" />
+</ItemGroup>
 </Project>

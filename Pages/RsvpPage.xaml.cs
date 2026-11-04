@@ -5,7 +5,8 @@ using RSVPApp.Services;
 namespace RSVPApp.Pages;
 
 /// <summary>
-/// Lets a user RSVP for an event. Saves the RSVP to the Rsvps table.
+/// Lets a user RSVP for an event. Sends the RSVP to the web API,
+/// which checks the deadline, capacity plus duplicates.
 /// </summary>
 public partial class RsvpPage : ContentPage
 {
@@ -29,7 +30,7 @@ public partial class RsvpPage : ContentPage
 		}
 	}
 
-	// Checks the fields, blocks double RSVPs, then saves
+	// Checks the fields, then sends the RSVP to the web API
 	private async void OnSubmitClicked(object sender, EventArgs e)
 	{
 		if (string.IsNullOrWhiteSpace(txtName.Text) ||
@@ -40,31 +41,33 @@ public partial class RsvpPage : ContentPage
 			return;
 		}
 
-		User? user = Session.CurrentUser;
-		string email = txtEmail.Text.Trim();
-
-		bool alreadyRsvpd = await RsvpDatabase.Instance.HasRsvpAsync(rsvpEvent.Id, user?.Id, email);
-		if (alreadyRsvpd)
-		{
-			lblError.Text = "You have already RSVP'd for this event.";
-			return;
-		}
-
-		// TODO (Week 4): check the RSVP deadline and max attendees
-
 		var rsvp = new Rsvp
 		{
 			EventId = rsvpEvent.Id,
-			UserId = user?.Id,
+			UserId = Session.CurrentUser?.Id,
 			Name = txtName.Text.Trim(),
-			Email = email,
+			Email = txtEmail.Text.Trim(),
 			Phone = txtPhone.Text.Trim(),
 			RsvpDate = DateTime.Now
 		};
 
-		await RsvpDatabase.Instance.AddRsvpAsync(rsvp);
-		await DisplayAlert("RSVP Confirmed", $"You're signed up for {rsvpEvent.Name}.", "OK");
-		await Navigation.PopAsync();
+		try
+		{
+			// Null means it saved; anything else is the reason it didn't
+			string? error = await RsvpDatabase.Instance.AddRsvpAsync(rsvp);
+			if (error != null)
+			{
+				lblError.Text = error;
+				return;
+			}
+
+			await DisplayAlert("RSVP Confirmed", $"You're signed up for {rsvpEvent.Name}.", "OK");
+			await Navigation.PopAsync();
+		}
+		catch (HttpRequestException)
+		{
+			lblError.Text = "Could not reach the server. Make sure the web API is running.";
+		}
 	}
 
 	// Goes back without submitting

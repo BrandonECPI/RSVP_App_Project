@@ -5,7 +5,7 @@ using RSVPApp.Services;
 namespace RSVPApp.Pages;
 
 /// <summary>
-/// Start page. Checks the login against users saved in the database.
+/// Start page. Checks the login through the web API using Basic Authentication.
 /// </summary>
 public partial class LoginPage : ContentPage
 {
@@ -23,7 +23,7 @@ public partial class LoginPage : ContentPage
 		lblError.Text = string.Empty;
 	}
 
-	// Checks the email and password against the Users table
+	// Sends the email plus password to the web API
 	private async void OnLoginClicked(object sender, EventArgs e)
 	{
 		string email = txtEmail.Text?.Trim() ?? string.Empty;
@@ -35,16 +35,23 @@ public partial class LoginPage : ContentPage
 			return;
 		}
 
-		User? user = await RsvpDatabase.Instance.LoginAsync(email, password);
-
-		if (user == null)
+		try
 		{
-			lblError.Text = "Login failed. Check your email and password.";
-			return;
-		}
+			User? user = await RsvpDatabase.Instance.LoginAsync(email, password);
 
-		Session.CurrentUser = user;
-		await Navigation.PushAsync(new EventsPage());
+			if (user == null)
+			{
+				lblError.Text = "Login failed. Check your email and password.";
+				return;
+			}
+
+			Session.CurrentUser = user;
+			await Navigation.PushAsync(new EventsPage());
+		}
+		catch (HttpRequestException)
+		{
+			lblError.Text = "Could not reach the server. Make sure the web API is running.";
+		}
 	}
 
 	// Opens the Events page with no logged-in user

@@ -1,202 +1,106 @@
-using SQLite;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text;
 using RSVPApp.Models;
 
 namespace RSVPApp.DataAccess;
 
 /// <summary>
-/// Data access layer. All reads and saves for users, events
-/// and RSVPs go through this class.
+/// Data access layer. As of Week 4, this talks to the RSVP web API
+/// instead of a local database. Method names stayed the same,
+/// so the pages didn't need to change.
 /// </summary>
 public class RsvpDatabase
 {
     // One shared copy used by every page
     public static RsvpDatabase Instance { get; } = new();
 
-    // Connection to the SQLite database (null until first use)
-    private SQLiteAsyncConnection? database;
+    // Web API address (change the port to match your running API)
+    private const string ApiBaseUrl = "http://localhost:5035/";
 
-    /// <summary>
-    /// Opens the database, creates the tables, then adds sample data on first run.
-    /// </summary>
-    private async Task Init()
-    {
-        if (database is not null)
-        {
-            return;
-        }
-
-        var db = new SQLiteAsyncConnection(DatabaseConstants.DatabasePath, DatabaseConstants.Flags);
-        await db.CreateTableAsync<User>();
-        await db.CreateTableAsync<RsvpEvent>();
-        await db.CreateTableAsync<Rsvp>();
-
-        database = db;
-        await SeedAsync();
-    }
-
-    /// <summary>
-    /// Adds starter users, events and RSVPs if the database is empty.
-    /// </summary>
-    private async Task SeedAsync()
-    {
-        if (await database!.Table<User>().CountAsync() > 0)
-        {
-            return;
-        }
-
-        var brandon = new User { Name = "Brandon Lazala", Email = "brandon@rsvp.com", Password = "Password1", Phone = "757-555-0101" };
-        var alex = new User { Name = "Alex Rivera", Email = "alex@rsvp.com", Password = "Password1", Phone = "757-555-0102" };
-        await database.InsertAsync(brandon);
-        await database.InsertAsync(alex);
-
-        var gameNight = new RsvpEvent
-        {
-            HostUserId = brandon.Id,
-            HostName = brandon.Name,
-            Name = "Fall Game Night",
-            Address = "123 Main St, Virginia Beach, VA",
-            MaxAttendees = 10,
-            EventDate = DateTime.Today.AddDays(10).AddHours(19),
-            RsvpDeadline = DateTime.Today.AddDays(7)
-        };
-        var studyGroup = new RsvpEvent
-        {
-            HostUserId = alex.Id,
-            HostName = alex.Name,
-            Name = "Mobile Dev Study Group",
-            Address = "ECPI Library, Room 204",
-            MaxAttendees = 8,
-            EventDate = DateTime.Today.AddDays(5).AddHours(17),
-            RsvpDeadline = DateTime.Today.AddDays(3)
-        };
-        var techMeetup = new RsvpEvent
-        {
-            HostUserId = alex.Id,
-            HostName = alex.Name,
-            Name = "Tech Meetup",
-            Address = "456 Ocean Ave, Norfolk, VA",
-            MaxAttendees = 20,
-            EventDate = DateTime.Today.AddDays(20).AddHours(18),
-            RsvpDeadline = DateTime.Today.AddDays(15)
-        };
-        await database.InsertAsync(gameNight);
-        await database.InsertAsync(studyGroup);
-        await database.InsertAsync(techMeetup);
-
-        // Alex is going to Brandon's event; Brandon is going to Alex's study group
-        await database.InsertAsync(new Rsvp { EventId = gameNight.Id, UserId = alex.Id, Name = alex.Name, Email = alex.Email, Phone = alex.Phone, RsvpDate = DateTime.Now });
-        await database.InsertAsync(new Rsvp { EventId = studyGroup.Id, UserId = brandon.Id, Name = brandon.Name, Email = brandon.Email, Phone = brandon.Phone, RsvpDate = DateTime.Now });
-    }
+    // One shared HttpClient for every request
+    private static readonly HttpClient client = new() { BaseAddress = new Uri(ApiBaseUrl) };
 
     // ---------- Users ----------
 
     /// <summary>
-    /// Input: email and password. Output: the matching user, or null if login fails.
+    /// Sends the login to the API using Basic Authentication.
+    /// Output: the user if the login works, or null if it doesn't.
     /// </summary>
     public async Task<User?> LoginAsync(string email, string password)
     {
-        await Init();
-        string cleanEmail = email.Trim().ToLowerInvariant();
-        return await database!.Table<User>()
-            .Where(u => u.Email == cleanEmail && u.Password == password)
-            .FirstOrDefaultAsync();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/Users/login");
+
+        // Build the "Basic <base64 email:password>" header
+        string token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{email.Trim()}:{password}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+
+        HttpResponseMessage response = await client.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<User>();
     }
 
     /// <summary>
-    /// Saves a new user. Returns false if the email is already taken.
+    /// Creates a new account. Returns false if the email is already taken.
     /// </summary>
     public async Task<bool> AddUserAsync(User user)
     {
-        await Init();
-        user.Email = user.Email.Trim().ToLowerInvariant();
-        string email = user.Email;
-
-        int count = await database!.Table<User>().Where(u => u.Email == email).CountAsync();
-        if (count > 0)
-        {
-            return false;
-        }
-
-        await database.InsertAsync(user);
-        return true;
+        HttpResponseMessage response = await client.PostAsJsonAsync("api/Users", user);
+        return response.IsSuccessStatusCode;
     }
 
     // ---------- Events ----------
 
-    /// <summary>
-    /// Output: every event, soonest first.
-    /// </summary>
+    // Output: every event
     public async Task<List<RsvpEvent>> GetAllEventsAsync()
     {
-        await Init();
-        return await database!.Table<RsvpEvent>().OrderBy(ev => ev.EventDate).ToListAsync();
+        return await client.GetFromJsonAsync<List<RsvpEvent>>("api/Events") ?? new List<RsvpEvent>();
     }
 
-    /// <summary>
-    /// Output: events the given user is hosting.
-    /// </summary>
+    // Output: events the given user is hosting
     public async Task<List<RsvpEvent>> GetHostingEventsAsync(int userId)
     {
-        await Init();
-        return await database!.Table<RsvpEvent>()
-            .Where(ev => ev.HostUserId == userId)
-            .OrderBy(ev => ev.EventDate)
-            .ToListAsync();
+        return await client.GetFromJsonAsync<List<RsvpEvent>>($"api/Events/hosting/{userId}") ?? new List<RsvpEvent>();
     }
 
-    /// <summary>
-    /// Output: events the given user has RSVP'd to.
-    /// </summary>
+    // Output: events the given user is attending
     public async Task<List<RsvpEvent>> GetAttendingEventsAsync(int userId)
     {
-        await Init();
-        int? id = userId;
-        List<Rsvp> rsvps = await database!.Table<Rsvp>().Where(r => r.UserId == id).ToListAsync();
-        HashSet<int> eventIds = rsvps.Select(r => r.EventId).ToHashSet();
-
-        List<RsvpEvent> allEvents = await GetAllEventsAsync();
-        return allEvents.Where(ev => eventIds.Contains(ev.Id)).ToList();
+        return await client.GetFromJsonAsync<List<RsvpEvent>>($"api/Events/attending/{userId}") ?? new List<RsvpEvent>();
     }
 
-    /// <summary>
-    /// Saves a new event.
-    /// </summary>
+    // Saves a new event. Output: 1 if saved, 0 if not.
     public async Task<int> AddEventAsync(RsvpEvent newEvent)
     {
-        await Init();
-        return await database!.InsertAsync(newEvent);
+        HttpResponseMessage response = await client.PostAsJsonAsync("api/Events", newEvent);
+        return response.IsSuccessStatusCode ? 1 : 0;
     }
 
     // ---------- RSVPs ----------
 
-    /// <summary>
-    /// Output: the names of everyone attending the given event.
-    /// </summary>
+    // Output: the names of everyone attending the given event
     public async Task<List<string>> GetAttendeeNamesAsync(int eventId)
     {
-        await Init();
-        List<Rsvp> rsvps = await database!.Table<Rsvp>().Where(r => r.EventId == eventId).ToListAsync();
-        return rsvps.Select(r => r.Name).ToList();
+        return await client.GetFromJsonAsync<List<string>>($"api/Events/{eventId}/attendees") ?? new List<string>();
     }
 
     /// <summary>
-    /// Returns true if this user (or email, for guests) already RSVP'd to the event.
+    /// Sends an RSVP to the API. The API checks the deadline, capacity plus duplicates.
+    /// Output: null if saved, or the error message from the API.
     /// </summary>
-    public async Task<bool> HasRsvpAsync(int eventId, int? userId, string email)
+    public async Task<string?> AddRsvpAsync(Rsvp rsvp)
     {
-        await Init();
-        string cleanEmail = email.Trim().ToLowerInvariant();
-        List<Rsvp> rsvps = await database!.Table<Rsvp>().Where(r => r.EventId == eventId).ToListAsync();
-        return rsvps.Any(r => (userId != null && r.UserId == userId) || r.Email == cleanEmail);
-    }
+        HttpResponseMessage response = await client.PostAsJsonAsync("api/Rsvps", rsvp);
+        if (response.IsSuccessStatusCode)
+        {
+            return null;
+        }
 
-    /// <summary>
-    /// Saves a new RSVP.
-    /// </summary>
-    public async Task<int> AddRsvpAsync(Rsvp rsvp)
-    {
-        await Init();
-        rsvp.Email = rsvp.Email.Trim().ToLowerInvariant();
-        return await database!.InsertAsync(rsvp);
+        string message = await response.Content.ReadAsStringAsync();
+        return string.IsNullOrWhiteSpace(message) ? "The RSVP could not be saved." : message.Trim('"');
     }
 }
